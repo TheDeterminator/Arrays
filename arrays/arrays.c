@@ -171,18 +171,23 @@ void arr_remove(Array *arr, char *element) {
 
   // Search for the first occurence of the element and remove it.
   int counter = 0;
+  if (arr->count == 0)
+  {
+    fprintf(stderr, "ValueError, attempting to pop from empty list\n");
+    return;
+  }
   while (strcmp(element, arr->elements[counter]) != 0)
   {
+    if (counter >= arr->count)
+    {
+      fprintf(stderr, "ValueError, value %s not in array", element);
+      return;
+    }
+
     counter++;
   }
 
-  if (counter >= arr->count)
-  {
-    fprintf(stderr, "ValueError, value %s not in array", element);
-    return;
-  }
 
-  // char *rv = arr->elements[counter];
   // Don't forget to free its memory!
   free(arr->elements[counter]);
   // Shift over every element after the removed element to the left one position
@@ -193,7 +198,6 @@ void arr_remove(Array *arr, char *element) {
   // Decrement count by 1
   arr->count--;
   arr->elements[arr->count] = NULL;
-  // return rv;
 }
 
 char *arr_pop(Array *arr)
@@ -209,6 +213,67 @@ char *arr_pop(Array *arr)
   arr->count--;
 
   return rv;
+}
+
+void arr_clear(Array *arr)
+{
+  for (int i = 0; i < arr->count; i++)
+  {
+    free(arr->elements[i]);
+  }
+
+  arr->count = 0;
+  arr->capacity = 10;
+  arr->elements = calloc(arr->capacity, sizeof(char *));
+}
+
+Array *arr_copy(Array *arr)
+{
+  Array *array_copy = create_array(arr->capacity);
+
+  for (int i=0; i<arr->count; i++)
+  {
+    // array_copy->elements[i] = arr->elements[i]; Why doesn't this work?
+    arr_append(array_copy, strdup(arr->elements[i]));
+  }
+
+  return array_copy;
+}
+
+void arr_extend(Array *arr1, Array *arr2)
+{
+  for (int i = 0; i < arr2->count; i++)
+  {
+    arr_append(arr1, arr2->elements[i]);
+  }
+}
+
+int arr_index(Array *arr, char *element)
+{
+  for (int i = 0; i < arr->count; i++)
+  {
+    if (strcmp(arr->elements[i], element) == 0)
+    {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+void arr_reverse(Array *arr)
+{
+  char **buffer = calloc(arr->capacity, sizeof(char *));
+  int counter = 0;
+
+  for (int i = arr->count-1; i >= 0; i--)
+  {
+    char* add_next = strdup(arr->elements[i]);
+    buffer[counter] = add_next;
+    counter++;
+  }
+
+  arr->elements = buffer; // Do I need a call to free somewhere in here? Maybe at the top of the for loop
 }
 
 
@@ -237,11 +302,33 @@ int main(void)
   arr_append(arr, "STRING4");
   arr_insert(arr, "STRING2", 0);
   arr_insert(arr, "STRING3", 1);
-  printf("MY TURN\n\n");
-  // printf("POP RETURNS: %s\n", arr_pop(arr));
+  arr_print(arr);
+  printf("POP RETURNS: %s\n", arr_pop(arr));
+  arr_clear(arr);
   arr_print(arr);
   arr_remove(arr, "STRING3");
+  arr_insert(arr, "STRING1", 0);
+  arr_append(arr, "STRING4");
+  arr_insert(arr, "STRING2", 0);
+  arr_insert(arr, "STRING3", 1);
+
+  Array *copy = arr_copy(arr);
   arr_print(arr);
+  printf("Array copy...\n");
+  arr_print(copy);
+
+  Array *extended = create_array(10);
+  arr_append(extended, "STRING88");
+  arr_append(extended, "STRING99");
+  arr_append(extended, "STRING0");
+  arr_append(extended, "STRING34");
+  arr_print(extended);
+  arr_extend(extended, copy);
+  arr_print(extended);
+  printf("Array Index: %i\n", arr_index(extended, "STRING34"));
+  arr_reverse(extended);
+  arr_print(extended);
+
 
   destroy_array(arr);
 
